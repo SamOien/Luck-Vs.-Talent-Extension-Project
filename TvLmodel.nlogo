@@ -30,12 +30,20 @@ TO SETUP
        set size size-of-individuals
        set color black
        set talent random-normal mean-talent stdev-talent
-       set success initial-success
+       if Distribution-Initial-Success = "Uniform"
+      [
+        set success initial-success
+      ]
+      if Distribution-Initial-Success = "Rand"
+      [
+        set success initial-success * random-float Rand-Scale
+       ;;set success initial-success * random-float 1
        set n-lucky-events 0
        set n-unlucky-events 0
      ]
   ]
 
+  ]
   set max-talent max [talent] of individuals
 
   ask n-of number-of-events patches with [pcolor = gray + 3]
@@ -190,6 +198,36 @@ TO GO
 
 END
 
+to interact-with-events
+  if events-die = true
+    [ interact-with-events-that-die ]
+  if events-die = false
+    [ interact-with-events-persistent ]
+end
+to interact-with-events-that-die
+  let lucky-event-prey one-of n-lucky-events
+  if lucky-event-prey != nobody [
+    ask lucky-event-prey [ die ]
+    if (talent > random 1) [
+      set success success * 2
+    ]
+  ]
+  let unlucky-event-prey one-of n-unlucky-events
+  if unlucky-event-prey != nobody [
+    ask unlucky-event-prey [ die ]
+    if (talent > random 1) [
+      set success success / 2
+    ]
+  ]
+end
+
+to interact-with-events-persistent
+  if count (n-lucky-events) >= 1 and (talent > random 1)
+    [ set success success * 2 ]
+  if count n-unlucky-events >= 1
+    [ set success success / 2 ]
+end
+
 TO PLOT-PDF-SUCCESS
 
   let size-max max [success] of individuals
@@ -234,6 +272,8 @@ TO PLOT-PDF-SUCCESS
    set iix (iix + ix-step)
   ]
 
+
+
 END
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -257,8 +297,8 @@ GRAPHICS-WINDOW
 200
 0
 200
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -306,7 +346,7 @@ number-of-individuals
 number-of-individuals
 0
 5000
-2000.0
+200.0
 10
 1
 NIL
@@ -321,7 +361,7 @@ SLIDER
 %-of-lucky-events
 0
 100
-50.0
+10.0
 1
 1
 %
@@ -336,7 +376,7 @@ number-of-events
 number-of-events
 0
 3000
-1000.0
+400.0
 10
 1
 NIL
@@ -381,7 +421,7 @@ size-of-individuals
 size-of-individuals
 0
 10
-7.0
+6.4
 0.2
 1
 NIL
@@ -444,17 +484,17 @@ initial-success
 initial-success
 0
 100
-10.0
+5.0
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
-850
-201
-1159
-341
+1069
+146
+1501
+436
 success-talent-plot
 talent
 success
@@ -470,10 +510,10 @@ PENS
 "mean-talent" 1.0 0 -2674135 true "" ""
 
 PLOT
-850
-38
-1159
-200
+561
+199
+870
+361
 success-pdf
 Log success
 Log PDF
@@ -496,17 +536,17 @@ simulation-time
 simulation-time
 0
 100
-80.0
+50.0
 5
 1
 NIL
 HORIZONTAL
 
 PLOT
-551
-201
-848
-341
+861
+10
+1158
+150
 lucky-events-plot
 success
 n-lucky-ev
@@ -521,10 +561,10 @@ PENS
 "default" 1.0 1 -15637942 true "" ""
 
 PLOT
-551
-342
-848
-479
+236
+482
+533
+619
 unlucky-events-plot
 success
 n-unlucky-ev
@@ -539,10 +579,10 @@ PENS
 "default" 1.0 1 -2674135 true "" ""
 
 PLOT
-850
-342
-1159
-479
+1110
+538
+1703
+783
 talent-success-plot
 success
 talent
@@ -566,14 +606,53 @@ TvL Model - A.Pluchino, A.E.Biondo, A.Rapisarda (\tarXiv:1802.07068)
 0.0
 1
 
+CHOOSER
+14
+485
+229
+530
+Distribution-Initial-Success
+Distribution-Initial-Success
+"Uniform" "Rand"
+0
+
+SLIDER
+11
+536
+230
+569
+Rand-Scale
+Rand-Scale
+1
+10
+5.0
+1
+1
+NIL
+HORIZONTAL
+
+SWITCH
+8
+592
+157
+625
+Events-Die
+Events-Die
+0
+1
+-1000
+
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+The TvL Model is a model that helps to illustrate the relationship between talent, luck, and their effect on success of an individual agent. 
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+Individual agents Talent are Gaussian distributed, as in reality. Luck follows a Pareto Distribution. An agent has 3 options when the simulation is run. 
+1. Nothing of any importance happens to an agent and they remain the same as in the beginning
+2. A lucky event happens to an agent. If the agent is talented enough to capitalize on this stroke of luck, then the agent will double their success with a probability proportional to Talent. 
+3. An unlucky event occurs to an agent and cuts their success in half. 
 
 ## HOW TO USE IT
 
@@ -600,8 +679,8 @@ TvL Model - A.Pluchino, A.E.Biondo, A.Rapisarda (\tarXiv:1802.07068)
 (models in the NetLogo Models Library and elsewhere which are of related interest)
 
 ## CREDITS AND REFERENCES
-
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+(Biondo & Rapisarda, 2018)
+https://www.comses.net/codebases/199a298b-fe95-473e-ad39-0fd69b5ff61c/releases/1.0.0/download/
 @#$#@#$#@
 default
 true
@@ -908,7 +987,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0.3
+NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
